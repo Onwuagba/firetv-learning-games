@@ -47,7 +47,7 @@ export function App() {
             {TILES.map((t) => {
               const p = sync.progress[t.screen as "abacus"];
               return (
-                <button key={t.id} className={`tile ${t.id} ${focus === t.id ? "focused" : ""}`} tabIndex={-1} onMouseEnter={() => setFocus(t.id)} onClick={() => setNav((n) => go(n, t.screen))}>
+                <button key={t.id} className={`tile t-${t.id} ${focus === t.id ? "focused" : ""}`} tabIndex={-1} onMouseEnter={() => setFocus(t.id)} onClick={() => setNav((n) => go(n, t.screen))}>
                   <span className="icon" aria-hidden>{t.icon}</span><span className="title">{t.title}</span><span className="sub">{t.sub}</span>
                   <span className="lvl">Level {sync.currentLevel(t.screen as "abacus")}{p ? ` · ${p.correct}/${p.attempts} right` : ""}</span>
                 </button>);
