@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Learn & Play TV",
+    "slug": "learn-and-play-tv",
+    "version": "0.1.0",
+    "orientation": "landscape",
+    "scheme": "learnandplaytv",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "plugins": [
+      "./plugins/withKotlinJvmTarget",
+      "./plugins/withKeyEvent",
+      [
+        "@react-native-tvos/config-tv",
+        { "androidTVBanner": "./assets/tv_icons/icon-400x240.png" }
+      ],
+      [
+        "expo-build-properties",
+        { "android": { "kotlinVersion": "2.0.21", "compileSdkVersion": 36, "targetSdkVersion": 34, "minSdkVersion": 24 } }
+      ]
+    ],
+    "android": { "package": "com.learnandplay.tv" },
+    "web": { "bundler": "metro" }
+  }
+}

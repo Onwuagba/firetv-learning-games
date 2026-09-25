@@ -8,7 +8,12 @@
     "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc",
     "build:preview": "esbuild src/ui/main.tsx --bundle --outfile=preview/bundle.js --jsx=automatic --loader:.json=json --define:process.env.NODE_ENV='\"production\"'",
-    "preview": "npm run build:preview && npx --yes http-server preview -p 5173"
+    "preview": "npm run build:preview && npx --yes http-server preview -p 5173",
+    "app:install": "cd app && npm install --legacy-peer-deps",
+    "app:web": "cd app && npx expo start --web --port 8082",
+    "app:typecheck": "cd app && npx tsc --noEmit",
+    "app:android": "cd app && npm run prebuild && npm run android",
+    "gen:map": "node scripts/gen-map.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

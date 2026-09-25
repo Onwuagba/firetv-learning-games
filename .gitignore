@@ -6,3 +6,9 @@ __pycache__/
 db.sqlite3
 .pytest_cache/
 preview/bundle.js
+app/node_modules/
+app/.expo/
+app/dist/
+scripts/node_modules/
+app/android/
+app/ios/
