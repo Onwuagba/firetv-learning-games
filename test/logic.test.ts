@@ -78,15 +78,16 @@ test("balance: parse all equation shapes", () => {
   }
 });
 
-test("balance: tilt direction, clamp, solve by adjusting", () => {
+test("balance: tilt direction, clamp, never auto-solves, Check required", () => {
   const e = { a: 2, b: 1, c: 9 }; // x=4
   assert.ok(B.tiltDegrees(e, 0) < 0); assert.ok(B.tiltDegrees(e, 10) > 0);
   assert.equal(B.tiltDegrees(e, 4), 0); assert.equal(Math.abs(B.tiltDegrees(e, 1000)), 14);
   let s = B.newBalance(1, seeded(5)); const target = Number(s.question.answer);
   s = B.adjust(s, "down"); assert.equal(s.guess, 0); assert.ok(!s.solved);
   for (let i = 0; i < target; i++) s = B.adjust(s, "up");
-  assert.ok(s.solved); assert.equal(B.adjust(s, "up"), s);
-  let t = { ...B.newBalance(1, seeded(5)) }; for (let i = 0; i < 40; i++) t = B.adjust({ ...t, solved: false }, "right"); assert.equal(t.guess, 20);
+  assert.equal(B.imbalance(s.eq, s.guess), 0); assert.ok(!s.solved, "balanced but not checked yet");
+  s = B.check(s); assert.ok(s.solved); assert.equal(s.attempts, 1); assert.equal(B.adjust(s, "up"), s);
+  let t = B.newBalance(1, seeded(5)); for (let i = 0; i < 40; i++) t = B.adjust(t, "right"); assert.equal(t.guess, 20);
 });
 
 test("focus grid: moves, edges, disabled, empty rows", () => {

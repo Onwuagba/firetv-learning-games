@@ -13,12 +13,15 @@
     "app:web": "cd app && npx expo start --web --port 8082",
     "app:typecheck": "cd app && npx tsc --noEmit",
     "app:android": "cd app && npm run prebuild && npm run android",
-    "gen:map": "node scripts/gen-map.mjs"
+    "gen:map": "node scripts/gen-map.mjs",
+    "gen:audio": "node scripts/gen-audio.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
+    "puppeteer-core": "^24.43.1",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   },

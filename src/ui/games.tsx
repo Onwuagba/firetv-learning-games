@@ -71,14 +71,14 @@ export function AbacusScreen({ register, level, onResult }: Props) {
 export function BalanceScreen({ register, level, onResult }: Props) {
   const s = useKeys(() => B.newBalance(Math.min(level, maxLevel("algebra"))), register, (s, k) => {
     if (k === "back") return s;
-    if (k === "select") { if (s.solved) return B.newBalance(s.question.level); onResult(s.question.level, s.guess === Number(s.question.answer)); return s; }
-    const n = B.adjust(s, k); if (n.solved && !s.solved) onResult(s.question.level, true); return n;
+    if (k === "select") { if (s.solved) return B.newBalance(s.question.level); const n = B.check(s); onResult(s.question.level, n.solved); return n; }
+    return B.adjust(s, k);
   });
   const deg = B.tiltDegrees(s.eq, s.guess);
   const { a, b, c } = s.eq;
   return (
     <main className="game">
-      <Top title="Balance Scales" level={s.question.level} hint="Up/Down: change x · OK: new puzzle" />
+      <Top title="Balance Scales" level={s.question.level} hint="Up/Down: change x · OK: check" />
       <div className="prompt">{s.question.prompt}</div>
       <div className="scale">
         <div className="beam" style={{ transform: `rotate(${-deg}deg)` }}>

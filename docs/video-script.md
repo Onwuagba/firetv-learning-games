@@ -1,18 +1,22 @@
-# Demo video script (DRAFT, target about 2:30)
+# Demo video script (target 3:00)
 
-TODO-verify: hackathon video length limit and required elements on the submission page.
-Record from the Fire TV emulator or device if available; otherwise the React Native app's web target (`npm run app:web`, http://localhost:8082, 1920x1080 window) with the keyboard standing in for the remote. Say which one you used. As of this draft the native build has NOT been run.
+TODO-verify: the hackathon's video length limit and required elements on the submission page.
+Record from the Fire TV emulator or device if you have one; otherwise the web target (`npm run app:web`, 1920x1080 window, keyboard as the remote) and **say so**. Native has NOT been run. Fresh start: clear site data so the Welcome screen shows. Every beat below has a matching screenshot from `npm run screenshots`.
 
-| Time | Screen | Voiceover | Action |
+| Time | Screen (shot) | Voiceover | Action |
 |---|---|---|---|
-| 0:00 | Title card | "Kids learn best when practice sits where the family already is: the living room TV." | Logo, one line pitch |
-| 0:12 | Home | "Three games, one curriculum, driven entirely by the remote. No typing." | Move focus across the tiles with the D-pad. Show the yellow focus ring and the level badges. Point out spatial navigation (react-tv-space-navigation) |
-| 0:30 | Abacus | "Left and right choose a rod. Up and down slide beads. OK checks the answer." | Beads are on screen: Left/Right picks a rod, Up/Down slides beads. Solve a 2-digit sum, wrong answer once, then right. Show the streak dots filling toward level-up (2 in a row) |
-| 1:00 | Map Quiz | "Countries and capitals, four big choices in a 2x2 grid." | A real map highlights the country. Answer 2 in a row, show the level-up message |
-| 1:25 | Balance Scales | "Algebra as a see-saw. Change x until the scales balance." | Show the beam tilting, then balancing |
-| 1:55 | Coach link | "Practice by voice with the Alexa+ Learning Coach shows up here." | Split screen: TV app (web target with `EXPO_PUBLIC_COACH_URL`) on Level 1, "Synced with coach" badge. In a terminal run `python scripts/demo_tv.py --child ada --answers 2` (stands in for Alexa+; say so unless you have real Alexa+ footage). Within 8 s the Abacus tile flips to Level 2, 2/2 right |
-| 2:15 | Back home + close | "Same content, both surfaces. Built for the Fire TV track." | BACK (Esc/Backspace on web, remote BACK on device) returns home from anywhere; the focus lands on the tile you left |
+| 0:00 | Title card | "Kids learn best where the family already is: the living room TV. Learn and Play turns the Fire TV remote into a learning toy." | Logo, one line pitch |
+| 0:12 | Welcome, new player (01-03) | "Every child gets their own profile. No system keyboard, just the D-pad." | OK on Add player, type "Ada" on the on-screen keyboard, Done |
+| 0:30 | Home (04, 05) | "Home is built from the curriculum: a tile per topic, a daily challenge, streak and stars." | Move focus across tiles: spring lift and glow. Point at the hero scene and the Daily banner |
+| 0:45 | Abacus (07, 10, 12) | "Left and right pick a rod, up and down slide beads, OK checks. Two right in a row and you level up." | Build a number, get it right twice, confetti and "Level up!". Next round shows target mode: "Make 3" |
+| 1:15 | Balance scales (15, 16, 18) | "The scale never solves itself. You set x, watch the beam tilt, and press Check." | Up twice, beam eases, OK on a wrong x: "Not balanced yet", then the right x: green beam, "Balanced!" |
+| 1:45 | Map quiz (19-24) | "Region focus and zoom. Capitals, continents, a highlighted country, or a flag." | Zoom button cycles World, Region, Close-up. Wrong answer auto-zooms to the answer. Flag question |
+| 2:10 | Results, daily, progress (28-30) | "Every round ends with stars. The daily challenge mixes all topics. Badges, streaks and a level map keep kids coming back." | Finish the daily challenge, show stars and new badges, open My progress, then Level map |
+| 2:35 | Parent gate, settings (31-34) | "Settings sit behind a grown-up math gate. Progress is saved on the TV first and syncs when the coach is reachable. Motion can be reduced." | Solve the gate, show sync state, coach server keyboard, Reduced motion On |
+| 2:50 | Coach link, close | "Practise by voice with the Alexa+ Learning Coach and it shows up here." | Split screen: TV app with `EXPO_PUBLIC_COACH_URL`, run `python scripts/demo_tv.py --child ada --answers 2` in the coach repo (stands in for Alexa+, say so unless you have real Alexa+ footage). Level flips within 8 s. End card |
 
 Notes
-- Do not claim device features you did not test (emulator, Fire TV Stick model, voice).
-- Keep captions on, large text is part of the design story.
+- Do not claim device features you did not test (emulator, Fire TV Stick model, audio on device, voice).
+- If you can hear audio in the recording, say the sounds and music are synthesised and can be muted (speaker button on Home, or Settings).
+- Keep captions on: large type is part of the design story.
+- The two `coach-sync-*-legacy-ui.png` shots are from the old UI; do not use them as current visuals.

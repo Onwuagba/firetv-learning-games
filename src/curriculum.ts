@@ -29,17 +29,50 @@ export function makeQuestion(topic: Topic, level: number, rng: () => number = Ma
     }
     default: throw new Error(`unknown kind ${spec.kind}`);
   }
-  // Numeric: 4 choices near the answer — remote-friendly (D-pad + select, no typing).
-  const n = Number(answer);
+  return { topic, level, prompt, answer, choices: numericChoices(Number(answer), rng) };
+}
+
+/** 4 numeric choices near the answer: remote-friendly (D-pad + select, no typing). */
+export function numericChoices(n: number, rng: () => number = Math.random): string[] {
   const near = new Set([n]);
   for (let d = 1; near.size < 4; d++) { if (n - d >= 0) near.add(n - d); if (near.size < 4) near.add(n + d); }
-  return { topic, level, prompt, answer, choices: shuffle([...near].map(String), rng) };
+  return shuffle([...near].map(String), rng);
 }
 
 export const maxLevel = (t: Topic) => data.topics[t].levels.length;
+
+// ---- Curriculum-driven metadata: the UI is built from these, never from hard-coded topic lists. ----
+export interface LevelSpec { level: number; kind: string; max?: number; region?: string }
+export const curriculum = data as unknown as {
+  topics: Record<string, { title: string; min_age?: number; levels: LevelSpec[] }>;
+  countries: { name: string; capital: string; continent: string; region: string }[];
+};
+/** Question kinds makeQuestion can build. A topic using any other kind is hidden (not crashed on). */
+export const KNOWN_KINDS = new Set(["count", "add", "subtract", "x_plus_a", "a_times_x", "a_times_x_plus_b", "continent", "capital"]);
+export const allTopics = (): Topic[] => Object.keys(curriculum.topics) as Topic[];
+/** Topics this build can play (every level's kind is known and there is at least one level). */
+export const playableTopics = (): Topic[] =>
+  allTopics().filter((t) => curriculum.topics[t].levels.length > 0 && curriculum.topics[t].levels.every((l) => KNOWN_KINDS.has(l.kind)));
+export const topicTitle = (t: Topic) => curriculum.topics[t].title;
+export const levelSpec = (t: Topic, level: number): LevelSpec =>
+  curriculum.topics[t].levels[Math.min(Math.max(level, 1), curriculum.topics[t].levels.length) - 1];
+export const clampLevel = (t: Topic, level: number) => Math.min(Math.max(1, Math.floor(level) || 1), maxLevel(t));
 
 function shuffle<T>(xs: T[], rng: () => number): T[] {
   const a = [...xs];
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
+}
+
+/** Which screen plays a topic, decided from its level kinds (not its name): new topics of a known shape work with no UI change. */
+export type GameKind = "abacus" | "balance" | "geo" | "generic";
+const KIND_GROUPS: [GameKind, string[]][] = [
+  ["abacus", ["count", "add", "subtract"]],
+  ["balance", ["x_plus_a", "a_times_x", "a_times_x_plus_b"]],
+  ["geo", ["continent", "capital"]],
+];
+export function gameFor(t: Topic): GameKind {
+  const kinds = curriculum.topics[t].levels.map((l) => l.kind);
+  for (const [g, ks] of KIND_GROUPS) if (kinds.length && kinds.every((k) => ks.includes(k))) return g;
+  return "generic";
 }

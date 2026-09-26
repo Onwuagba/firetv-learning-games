@@ -12,14 +12,36 @@
       "./plugins/withKeyEvent",
       [
         "@react-native-tvos/config-tv",
-        { "androidTVBanner": "./assets/tv_icons/icon-400x240.png" }
+        {
+          "androidTVBanner": "./assets/tv_icons/icon-400x240.png"
+        }
       ],
       [
         "expo-build-properties",
-        { "android": { "kotlinVersion": "2.0.21", "compileSdkVersion": 36, "targetSdkVersion": 34, "minSdkVersion": 24 } }
+        {
+          "android": {
+            "kotlinVersion": "2.0.21",
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 24
+          }
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
       ]
     ],
-    "android": { "package": "com.learnandplay.tv" },
-    "web": { "bundler": "metro" }
+    "android": {
+      "package": "com.learnandplay.tv",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    }
   }
 }
