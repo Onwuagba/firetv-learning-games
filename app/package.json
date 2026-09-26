@@ -13,6 +13,8 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-tvos/config-tv": "0.1.6",
     "expo": "~54.0.36",
     "expo-build-properties": "~1.0.0",
@@ -26,7 +28,6 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-svg": "15.12.1",
     "react-native-web": "~0.21.0",
-    "@expo/metro-runtime": "~6.1.2",
     "react-tv-space-navigation": "6.0.0-beta1"
   },
   "devDependencies": {

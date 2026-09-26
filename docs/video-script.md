@@ -10,7 +10,7 @@ Record from the Fire TV emulator or device if available; otherwise the React Nat
 | 0:30 | Abacus | "Left and right choose a rod. Up and down slide beads. OK checks the answer." | Beads are on screen: Left/Right picks a rod, Up/Down slides beads. Solve a 2-digit sum, wrong answer once, then right. Show the streak dots filling toward level-up (3 in a row) |
 | 1:00 | Map Quiz | "Countries and capitals, four big choices in a 2x2 grid." | A real map highlights the country. Answer 3 in a row, show the level-up message |
 | 1:25 | Balance Scales | "Algebra as a see-saw. Change x until the scales balance." | Show the beam tilting, then balancing |
-| 1:55 | Coach link | "Practice by voice with the Alexa+ Learning Coach shows up here, and the reverse." | Show progress on home tiles. Only claim what is real: currently a mock adapter (TODO: swap in coach API) |
+| 1:55 | Coach link | "Practice by voice with the Alexa+ Learning Coach shows up here." | Split screen: TV app (web target with `EXPO_PUBLIC_COACH_URL`) on Level 1, "Synced with coach" badge. In a terminal run `python scripts/demo_tv.py --child ada --answers 2` (stands in for Alexa+; say so unless you have real Alexa+ footage). Within 8 s the Abacus tile flips to Level 2, 2/2 right |
 | 2:15 | Back home + close | "Same content, both surfaces. Built for the Fire TV track." | BACK (Esc/Backspace on web, remote BACK on device) returns home from anywhere; the focus lands on the tile you left |
 
 Notes

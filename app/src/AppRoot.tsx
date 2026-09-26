@@ -9,7 +9,8 @@ import { Home } from "./screens/Home";
 import { Abacus } from "./screens/Abacus";
 import { MapQuiz } from "./screens/MapQuiz";
 import { Balance } from "./screens/Balance";
-import { sync } from "./session";
+import { sync, startSession } from "./session";
+import { SyncBadge } from "./components/SyncBadge";
 import { colors } from "./theme";
 
 export default function AppRoot() {
@@ -18,7 +19,12 @@ export default function AppRoot() {
   const [, bump] = useReducer((x: number) => x + 1, 0);
   const navRef = useRef(nav); navRef.current = nav;
 
-  useEffect(() => { void sync.load().then(bump); }, []);
+  useEffect(() => {
+    const unsub = sync.subscribe(bump);
+    let stop = () => {}; let dead = false;
+    void startSession().then((s) => { if (dead) s(); else stop = s; bump(); });
+    return () => { dead = true; stop(); unsub(); };
+  }, []);
 
   // BACK pops toward home; on home it returns false so the system handles it (exit to Fire TV launcher).
   const lastBack = useRef(0);
@@ -46,6 +52,7 @@ export default function AppRoot() {
         {scr === "abacus" && <Abacus />}
         {scr === "geography" && <MapQuiz />}
         {scr === "algebra" && <Balance />}
+        <SyncBadge status={sync.status} queued={sync.queue.length} />
       </View>
     </SafeAreaProvider>
   );

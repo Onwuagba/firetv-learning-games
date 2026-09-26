@@ -1,6 +1,6 @@
 import { maxLevel } from "../curriculum.js";
 import { STREAK_TO_LEVEL_UP } from "../games/quiz.js";
-import type { Progress, ProgressApiClient, ProgressEvent } from "./types.js";
+import { PermanentError, type KeyValueStorage, type Progress, type ProgressApiClient, type ProgressEvent, type SyncStatus } from "./types.js";
 
 /** Fold events into progress. Level goes up after STREAK_TO_LEVEL_UP consecutive correct at the current level. */
 export function applyEvents(p: Progress, events: ProgressEvent[]): Progress {
@@ -26,24 +26,63 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
   return out;
 }
 
-/** Local-first sync: record() queues events; flush() pushes, keeping the queue on failure (offline-safe). */
+/**
+ * Local-first sync: record() queues events; flush() pushes, keeping the queue on failure (offline-safe).
+ * With `storage`, progress and the queue survive restarts (restore() / load()). The server (coach) is the
+ * source of truth: after a successful load, progress = server progress + still-queued local events.
+ */
 export class ProgressSync {
   progress: Progress = {};
   queue: ProgressEvent[] = [];
-  constructor(private api: ProgressApiClient, private learnerId: string, private now: () => number = Date.now) {}
+  status: SyncStatus;
+  private seq = 0;
+  private listeners = new Set<() => void>();
+  constructor(private api: ProgressApiClient, private learnerId: string, private now: () => number = Date.now,
+              private storage?: KeyValueStorage, private remote = true) { this.status = remote ? "pending" : "local"; }
+  private get key() { return `learncoach:v1:${this.learnerId}`; }
+  subscribe(fn: () => void) { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; }
+  private emit() { this.listeners.forEach((f) => f()); }
+  private setStatus(s: SyncStatus) { if (this.remote && this.status !== s) { this.status = s; this.emit(); } }
+  private async persist() {
+    try { await this.storage?.setItem(this.key, JSON.stringify({ progress: this.progress, queue: this.queue })); } catch { /* storage is best-effort */ }
+  }
+  /** Load persisted local state (call once at startup, before load()). */
+  async restore(): Promise<void> {
+    try {
+      const raw = await this.storage?.getItem(this.key);
+      if (!raw) return;
+      const j = JSON.parse(raw) as { progress?: Progress; queue?: ProgressEvent[] };
+      if (j.progress && typeof j.progress === "object") this.progress = mergeProgress(this.progress, j.progress);
+      if (Array.isArray(j.queue)) this.queue = [...j.queue, ...this.queue];
+      this.emit();
+    } catch { /* corrupt storage: start fresh */ }
+  }
   async load(): Promise<Progress> {
-    try { this.progress = mergeProgress(await this.api.fetchProgress(this.learnerId), this.progress); } catch { /* stay local */ }
+    try {
+      const remote = await this.api.fetchProgress(this.learnerId);
+      this.progress = this.queue.length ? applyEvents(remote, this.queue) : Object.keys(remote).length ? remote : this.progress;
+      this.setStatus(this.queue.length ? "pending" : "synced");
+      await this.persist();
+    } catch { this.setStatus("offline"); /* stay local */ }
+    this.emit();
     return this.progress;
   }
   record(topic: ProgressEvent["topic"], level: number, correct: boolean): void {
-    const ev = { topic, level, correct, at: this.now() };
+    const at = this.now();
+    const id = `${at.toString(36)}-${(this.seq++).toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const ev = { topic, level, correct, at, id };
     this.queue.push(ev); this.progress = applyEvents(this.progress, [ev]);
+    this.setStatus("pending"); void this.persist(); this.emit();
   }
   async flush(): Promise<boolean> {
     if (!this.queue.length) return true;
     const batch = this.queue.slice();
-    try { await this.api.pushEvents(this.learnerId, batch); this.queue = this.queue.slice(batch.length); return true; }
-    catch { return false; }
+    try { await this.api.pushEvents(this.learnerId, batch); this.queue = this.queue.slice(batch.length); this.setStatus(this.queue.length ? "pending" : "synced"); await this.persist(); return true; }
+    catch (e) {
+      if (e instanceof PermanentError) { this.queue = this.queue.slice(batch.length); await this.persist(); } // can never succeed: drop
+      else this.setStatus("offline");
+      return false;
+    }
   }
   currentLevel(topic: ProgressEvent["topic"]) { return this.progress[topic]?.level ?? 1; }
 }

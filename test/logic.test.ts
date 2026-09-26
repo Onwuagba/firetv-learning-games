@@ -9,6 +9,7 @@ import { back, go, initialNav, current, atHome } from "../src/nav.js";
 import { MockProgressClient } from "../src/progress/mock.js";
 import { ProgressSync, applyEvents, mergeProgress } from "../src/progress/sync.js";
 import { HttpProgressClient } from "../src/progress/http.js";
+import { PermanentError } from "../src/progress/types.js";
 import { mapKey } from "../src/ui/keys.js";
 
 const seeded = (seed = 1) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
@@ -132,10 +133,58 @@ test("sync: offline queue is retained then flushed; load merges remote", async (
   assert.equal(s.currentLevel("geography"), 2);
 });
 
-test("http client: builds requests (fetch stubbed; server contract TODO-verify)", async () => {
+test("http client: matches the coach TV API contract (fetch stubbed)", async () => {
   const calls: { url: string; init?: RequestInit }[] = [];
-  const f = (async (url: string, init?: RequestInit) => { calls.push({ url, init }); return { ok: true, json: async () => ({}) }; }) as unknown as typeof fetch;
-  const c = new HttpProgressClient("https://x.test", "tok", f);
-  await c.fetchProgress("a b"); await c.pushEvents("a b", []);
-  assert.match(calls[0].url, /learners\/a%20b\/progress$/); assert.equal(calls[1].init?.method, "POST");
+  const reply = { progress: { abacus: { level: 2, correct: 2, attempts: 2, streak: 0, updatedAt: 5 } } };
+  const f = (async (url: string, init?: RequestInit) => { calls.push({ url, init }); return { ok: true, status: 200, json: async () => reply }; }) as unknown as typeof fetch;
+  const c = new HttpProgressClient("https://x.test/", "tok", f);
+  const p = await c.fetchProgress("a b");
+  assert.equal(p.abacus!.level, 2);
+  await c.pushEvents("a b", [{ topic: "abacus", level: 7, correct: true, at: 9, id: "k1" }]);
+  assert.equal(calls[0].url, "https://x.test/api/progress/a%20b");
+  assert.equal((calls[0].init!.headers as Record<string, string>).authorization, "Bearer tok");
+  assert.equal(calls[1].url, "https://x.test/api/progress/a%20b/events");
+  assert.equal(calls[1].init?.method, "POST");
+  assert.deepEqual(JSON.parse(calls[1].init!.body as string), { events: [{ id: "k1", topic: "abacus", correct: true, at: 9 }] }); // no client-claimed level
+});
+
+test("http client: errors; 400 is permanent, 5xx/401 are retryable, bad shape rejected", async () => {
+  const mk = (status: number, body: unknown = {}) => new HttpProgressClient("http://x", "t", (async () => ({ ok: status < 300, status, json: async () => body })) as unknown as typeof fetch);
+  await assert.rejects(mk(401).fetchProgress("a"), (e: Error) => !(e instanceof PermanentError));
+  await assert.rejects(mk(500).pushEvents("a", []), (e: Error) => !(e instanceof PermanentError));
+  await assert.rejects(mk(400).pushEvents("a", []), PermanentError);
+  await assert.rejects(mk(200, { nope: 1 }).fetchProgress("a"), /unexpected/);
+});
+
+function memStore() {
+  const m = new Map<string, string>();
+  return { m, getItem: async (k: string) => m.get(k) ?? null, setItem: async (k: string, v: string) => { m.set(k, v); } };
+}
+
+test("sync: state persists across restarts and unsent events flush when back online", async () => {
+  const st = memStore(); const api = new MockProgressClient(); let t = 0;
+  const a = new ProgressSync(api, "kid", () => ++t, st);
+  await a.restore(); await a.load();
+  api.failNext = 5;
+  a.record("abacus", 1, true); a.record("abacus", 1, true); a.record("abacus", 1, true);
+  assert.equal(await a.flush(), false); assert.equal(a.status, "offline");
+  await new Promise((r) => setTimeout(r, 0));
+  // "restart": new instance, same storage, server still offline for the first load
+  const b = new ProgressSync(api, "kid", () => ++t, st);
+  await b.restore(); await b.load();
+  assert.equal(b.queue.length, 3); assert.equal(b.currentLevel("abacus"), 2); assert.equal(b.status, "offline");
+  api.failNext = 0;
+  assert.equal(await b.flush(), true); assert.equal(b.status, "synced");
+  assert.equal(api.store.get("kid")!.abacus!.attempts, 3);
+  assert.equal(JSON.parse(st.m.get("learncoach:v1:kid")!).queue.length, 0);
+});
+
+test("sync: server is source of truth on load; queued events are re-applied on top; permanent errors drop the batch", async () => {
+  const api = new MockProgressClient(); const s = new ProgressSync(api, "kid", () => 1);
+  api.store.set("kid", { abacus: { level: 4, correct: 9, attempts: 9, updatedAt: 1 } });
+  s.progress = { abacus: { level: 1, correct: 0, attempts: 0, updatedAt: 0 } };
+  await s.load(); assert.equal(s.currentLevel("abacus"), 4);
+  s.record("abacus", 4, true); await s.load(); assert.equal(s.progress.abacus!.attempts, 10); assert.equal(s.status, "pending");
+  api.pushEvents = async () => { throw new PermanentError("bad"); };
+  assert.equal(await s.flush(), false); assert.equal(s.queue.length, 0);
 });
