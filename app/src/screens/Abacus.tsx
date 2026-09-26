@@ -45,7 +45,7 @@ export function Abacus() {
     record("abacus", s.level, ok); bump((n) => n + 1);
     setS({ ...s, result: ok });
   };
-  // Level comes from ProgressSync: same "3 correct in a row" rule (STREAK_TO_LEVEL_UP) as every other game.
+  // Level comes from ProgressSync: same "2 correct in a row" rule (STREAK_TO_LEVEL_UP) as every other game.
   const next = () => setS(make(sync.currentLevel("abacus")));
   const total = A.value(s.ab);
   const isSum = /[+−]/.test(s.q.prompt);

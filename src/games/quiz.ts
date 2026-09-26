@@ -2,7 +2,7 @@
 import { makeQuestion, maxLevel, type Question, type Topic } from "../curriculum.js";
 import type { Dir } from "../focus/grid.js";
 
-export const STREAK_TO_LEVEL_UP = 3;
+export const STREAK_TO_LEVEL_UP = 2; // matches the coach (alexa-learning-coach store.PROMOTE_AFTER)
 export interface QuizState {
   topic: Topic; level: number; question: Question; focus: number; // index into choices (2x2 grid)
   picked: number | null; streak: number; correct: number; attempts: number; leveledUp: boolean;

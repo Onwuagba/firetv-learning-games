@@ -48,14 +48,14 @@ test("quiz: 2x2 focus movement clamps; submit right/wrong; streak and level up",
   s = Q.moveChoice(s, "right"); assert.equal(s.focus, 1);
   s = Q.moveChoice(s, "down"); assert.equal(s.focus, 3);
   s = Q.moveChoice(s, "right"); s = Q.moveChoice(s, "down"); assert.equal(s.focus, 3);
-  // answer correctly 3 times
-  for (let i = 0; i < 3; i++) {
+  // answer correctly STREAK_TO_LEVEL_UP (2) times
+  for (let i = 0; i < Q.STREAK_TO_LEVEL_UP; i++) {
     s = { ...s, focus: s.question.choices.indexOf(s.question.answer) };
     s = Q.submit(s); assert.ok(Q.isCorrect(s));
     assert.equal(Q.submit(s), s); assert.equal(Q.moveChoice(s, "left"), s);
     s = Q.next(s, rng);
   }
-  assert.equal(s.level, 2); assert.equal(s.streak, 0); assert.equal(s.correct, 3);
+  assert.equal(s.level, 2); assert.equal(s.streak, 0); assert.equal(s.correct, Q.STREAK_TO_LEVEL_UP);
   const wrongIdx = s.question.choices.findIndex((c) => c !== s.question.answer);
   s = Q.submit({ ...s, focus: wrongIdx }); assert.ok(!Q.isCorrect(s)); assert.equal(s.streak, 0);
 });
@@ -108,11 +108,11 @@ test("keys: remote mapping", () => {
   assert.equal(mapKey("ArrowUp"), "up"); assert.equal(mapKey("Enter"), "select"); assert.equal(mapKey("Escape"), "back"); assert.equal(mapKey("KeyQ"), null);
 });
 
-test("progress: applyEvents levels up after 3 correct streak, wrong resets", () => {
+test("progress: applyEvents levels up after 2 correct in a row (coach rule), wrong resets", () => {
   const ev = (correct: boolean, at: number, level = 1) => ({ topic: "abacus" as Topic, level, correct, at });
-  let p = applyEvents({}, [ev(true, 1), ev(true, 2), ev(false, 3), ev(true, 4), ev(true, 5)]);
-  assert.equal(p.abacus!.level, 1); assert.equal(p.abacus!.attempts, 5); assert.equal(p.abacus!.correct, 4);
-  p = applyEvents({}, [ev(true, 1), ev(true, 2), ev(true, 3)]); assert.equal(p.abacus!.level, 2); assert.equal(p.abacus!.updatedAt, 3);
+  let p = applyEvents({}, [ev(true, 1), ev(false, 2), ev(true, 3), ev(false, 4), ev(true, 5)]);
+  assert.equal(p.abacus!.level, 1); assert.equal(p.abacus!.attempts, 5); assert.equal(p.abacus!.correct, 3);
+  p = applyEvents({}, [ev(true, 1), ev(true, 2)]); assert.equal(p.abacus!.level, 2); assert.equal(p.abacus!.updatedAt, 2);
 });
 
 test("progress: merge keeps higher level and both topics", () => {
