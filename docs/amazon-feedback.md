@@ -4,7 +4,7 @@ Purpose: the hackathon may ask for feedback on the tools. Fill in from real expe
 
 ## What we tried
 - Sample base: react-native-multi-tv-app-sample (named in the hackathon Resources). Not cloned or run in this build: TODO-verify repo URL and status.
-- Runtime target: React Native for TV (react-native-tvos on npm, latest seen 0.87.1-1) on the Fire TV emulator. Not run yet.
+- Runtime target: React Native for TV (react-native-tvos on npm, latest seen 0.87.1-1) on an Android TV emulator (Android 13, API 33): built and run on 2026-10-20. Not run on Fire OS or a Fire TV device yet.
 
 ## Real friction so far (fill in as you go)
 - [ ] Emulator setup time and image availability

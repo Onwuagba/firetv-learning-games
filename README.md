@@ -6,8 +6,9 @@ Progress syncs with the Alexa+ Learning Coach, so practice by voice shows up on 
 
 `app/` is the real app: Expo + React Native for TV (`react-native-tvos` 0.81), started from Amazon's
 [react-native-multi-tv-app-sample](https://github.com/AmazonAppDev/react-native-multi-tv-app-sample) (MIT-0, see `NOTICE`).
-Everything below is verified on the **web target** (headless Chrome, arrow keys only). **Nothing has been run on a Fire TV,
-an emulator or any Android device** (no Android SDK on the dev machine), see "Verified vs not verified".
+The product tour below is captured on the **web target** (headless Chrome, arrow keys only). The native Android build has also
+been built with Gradle and **run on an Android TV emulator** (Android 13, API 33, x86), driven with remote key presses. It has
+**not** been run on a Fire TV device or in Amazon's Fire OS image, see "Verified vs not verified".
 
 ## Product tour (screenshots in `docs/screenshots/`, all captured by `npm run screenshots`)
 
@@ -56,13 +57,13 @@ npm run gen:audio                                   # regenerates app/assets/aud
 ```
 `npm run screenshots` needs Chrome (`CHROME=/path` or auto-detected from `~/.cache/puppeteer` / `/Applications`) and `puppeteer-core` (dev dependency). Add `?debug=1&seed=N` to the web URL to expose the current answer as `globalThis.__lp` and make questions deterministic (used by the script only).
 
-### Fire TV / Android TV (NOT run)
+### Fire TV / Android TV (built and run on an Android TV emulator; not on Fire OS)
 
 Requirements: JDK 17, Android SDK (platform 36), a Fire TV or Android TV emulator/device with ADB.
 ```bash
 cd app && npm install --legacy-peer-deps
-EXPO_TV=1 npx expo prebuild --clean --platform android   # verified again after adding expo-audio (prebuild only, no Gradle build)
-EXPO_TV=1 npx expo run:android
+EXPO_TV=1 npx expo prebuild --clean --platform android
+EXPO_TV=1 npx expo run:android     # Gradle debug build; Metro serves the JS (adb reverse tcp:8081 tcp:8081)
 # Fire TV over the network:  adb connect <fire-tv-ip>:5555
 ```
 
@@ -90,7 +91,7 @@ UI components are not unit tested; they are exercised end to end by `npm run scr
 ## Verified vs not verified
 
 Verified: `npm test` (40 pass), `tsc` for root and `app/`, `expo export --platform web` (bundle 947 kB JS), full arrow-key run through every screen in headless Chrome 148 at 1920x1080 with no console errors.
-NOT verified: any native Android / Fire TV build or run, real remote key codes and `BackHandler` on Fire OS, audio playback on device, frame rate and memory on a Fire TV Stick (nothing measured; the memoisation above is by design, not by profiling), TalkBack, emoji flag rendering on Fire OS fonts (Android's Noto emoji should have them), tvOS, the Alexa+ side (simulated over MCP by the coach's `scripts/demo_tv.py`).
+Verified on an Android TV emulator (2026-10-20, API 33 x86 image, Gradle debug build, Metro-served JS): the app launches to the Welcome screen, the D-pad and OK drive every screen (on-screen keyboard, abacus, balance scales, map quiz, results, My progress), level-ups and badges appear, and BACK returns from a game to Home. That run found and fixed one real bug: BACK exited the whole app from inside a game (see `docs/FRICTION_LOG.md` F4). NOT verified: Fire OS itself (a different image from Android TV) or a real Fire TV remote, audio playback on device (the emulator ran with audio off), frame rate and memory on a Fire TV Stick (nothing measured; the memoisation above is by design, not by profiling), TalkBack, emoji flag rendering on Fire OS fonts (Android's Noto emoji should have them), tvOS, the Alexa+ side (simulated over MCP by the coach's `scripts/demo_tv.py`).
 
 ## Known gaps
 

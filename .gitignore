@@ -12,3 +12,5 @@ app/dist/
 scripts/node_modules/
 app/android/
 app/ios/
+
+SUBMISSION.private.md

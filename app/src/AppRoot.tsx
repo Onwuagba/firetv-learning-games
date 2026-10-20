@@ -81,15 +81,19 @@ export default function AppRoot() {
   // BACK pops toward home; on home it returns false so the system handles it (exit to Fire TV launcher).
   const lastBack = useRef(0);
   const onBack = useCallback(() => {
+    // Dedupe first: a duplicate delivery must not see "home" (just reached) and hand BACK to the system.
+    const t = Date.now(); if (t - lastBack.current < 250) return true;
     if (current(navRef.current) === "home") return false;
-    const t = Date.now(); if (t - lastBack.current < 250) return true; lastBack.current = t; // dedupe key event + BackHandler
+    lastBack.current = t;
     void syncNow(); audio.play("back"); setNav((n) => back(n));
     return true;
   }, []);
   useEffect(() => {
-    // Web: Esc / Backspace. Android/Fire TV: BACK arrives both as a key event (KEYCODE_BACK=4, see tv/RemoteControlManager.android.ts)
-    // and as BackHandler's hardwareBackPress depending on the activity; listen to both, onBack dedupes.
-    const l = (k: SupportedKeys) => { if (k === SupportedKeys.Back) onBack(); };
+    // Web: Esc / Backspace arrive as key events. Android/Fire TV: BACK arrives as a key event (KEYCODE_BACK=4, see
+    // tv/RemoteControlManager.android.ts) AND as BackHandler's hardwareBackPress, which can land over a second later on a
+    // busy JS thread. Found on the Android TV emulator: handling both exited the app from inside a game (the second
+    // delivery saw "home" and returned false). So native listens to BackHandler only.
+    const l = (k: SupportedKeys) => { if (k === SupportedKeys.Back && Platform.OS === "web") onBack(); };
     RemoteControlManager.addKeydownListener(l);
     const sub = Platform.OS === "web" ? null : BackHandler.addEventListener("hardwareBackPress", onBack);
     return () => { RemoteControlManager.removeKeydownListener(l); sub?.remove(); };
